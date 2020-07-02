@@ -64,7 +64,7 @@ mov r1,#1       /* store 1 in register r1 */
 lsl r1,#21      /* logical shift left contents of r1 by 18 bits */
 /* now r1 = 00000000 00100000 00000000 00000000 */
 
-str r1,[r0,#16]  /* write contents of r1 into address given by r0 + 4 */
+str r1,[r0,#16]  /* write contents of r1 into address given by r0 + 16 */
 /*
  * So writing r1 to (r0+16) results in
  *
@@ -85,19 +85,19 @@ str r1,[r0,#16]  /* write contents of r1 into address given by r0 + 4 */
  */
 
 /******************************************************************************
- * Turn off GPIO pin 16
+ * Turn off GPIO pin 47
  *
- * We do this by flipping the 16th bit (for the 16th pin) in the
- * "GPIO Pin Output Clear 0" register in the GPIO controller
+ * We do this by flipping the 15th bit (for the 32+15th pin) in the
+ * "GPIO Pin Output Clear 1" register in the GPIO controller
  *
  ******************************************************************************/
 mov r1,#1       /* store 1 in register r1 */
 /* now r1 = 00000000 00000000 00000000 00000001 */
 
-lsl r1,#14      /* shift left contents of r1 by 14 bits */
-/* now r1 = 00000000 00000000 01000000 00000000 */
+lsl r1,#15      /* shift left contents of r1 by 15 bits */
+/* now r1 = 00000000 00000000 10000000 00000000 */
 
-str r1,[r0,#40] /* write contents of r1 into address given by r0 + 41 */
+str r1,[r0,#41] /* write contents of r1 into address given by r0 + 41 */
 /* r0 + 41 = the "GPIO Pin Output Clear 1" register
 
 /******************************************************************************
