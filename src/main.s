@@ -58,13 +58,16 @@ ldr r0,=0x20200000
  * Enable output to GPIO pin 47 (the ACT LED) by flipping a bit in a specific
  * register in the GPIO controller.
  ******************************************************************************/
-mov r1, #1       /* store 1 in register r1 */
-/* now r1 = 00000000 00000000 00000000 00000001 */
+//ldr r1, =0b00001001001001001001001001001001       /* store 1 in register r1 */
+//ldr r1, =0b00100100100100100100100100100100       /* store 1 in register r1 */
+ldr r1, =0b10010010010010010010010010010000       /* store 1 in register r1 */
 
-lsl r1, #21      /* logical shift left contents of r1 by 21 bits */
-/* now r1 = 00000000 00100000 00000000 00000000 */
-
+str r1, [r0, #0]
+str r1, [r0, #4]
+str r1, [r0, #8]
+str r1, [r0, #12]
 str r1, [r0, #16]  /* write contents of r1 into address given by r0 + 16 */
+str r1, [r0, #20]
 /*
  * So writing r1 to (r0+16) results in
  *
@@ -99,12 +102,10 @@ str r1, [r0, #16]  /* write contents of r1 into address given by r0 + 16 */
  * "GPIO Pin Output Clear 1" register in the GPIO controller
  *
  ******************************************************************************/
-mov r1, #1       /* store 1 in register r1 */
+mov r1, #4294967295 /* store 1 in register r1 */
 /* now r1 = 00000000 00000000 00000000 00000001 */
 
-lsl r1, #15      /* shift left contents of r1 by 15 bits */
-/* now r1 = 00000000 00000000 10000000 00000000 */
-
+str r1, [r0, #40] /* write contents of r1 into address given by r0 + 44 */
 str r1, [r0, #44] /* write contents of r1 into address given by r0 + 44 */
 /* r0 + 44 = the "GPIO Pin Output Clear 1" register
 
