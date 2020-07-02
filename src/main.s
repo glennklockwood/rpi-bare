@@ -58,13 +58,13 @@ ldr r0,=0x20200000
  * Enable output to GPIO pin 47 (the ACT LED) by flipping a bit in a specific
  * register in the GPIO controller.
  ******************************************************************************/
-mov r1,#1       /* store 1 in register r1 */
+mov r1, #1       /* store 1 in register r1 */
 /* now r1 = 00000000 00000000 00000000 00000001 */
 
-lsl r1,#21      /* logical shift left contents of r1 by 18 bits */
+lsl r1, #21      /* logical shift left contents of r1 by 21 bits */
 /* now r1 = 00000000 00100000 00000000 00000000 */
 
-str r1,[r0,#16]  /* write contents of r1 into address given by r0 + 16 */
+str r1, [r0, #16]  /* write contents of r1 into address given by r0 + 16 */
 /*
  * So writing r1 to (r0+16) results in
  *
@@ -77,11 +77,19 @@ str r1,[r0,#16]  /* write contents of r1 into address given by r0 + 16 */
  *                          xx999888 77766655 54443332 22111000
  *
  * So writing 00000000 00100000 00000000 00000000 to (r0 + 16) affects the least
- * significant bit of the 7th GPIO in pins 40-49 (i.e., pin #47) to 1:
+ * significant bit of the 7th GPIO in pins 40-49 (i.e., pin #47) to 001:
  *
  *                          xx999888 77766655 54443332 22111000
  * r0 + 16 = pins 40-49     00000000 00100000 00000000 00000000
  *
+ * From the command table, 000 = GPIO pin is an input
+ *                         001 = GPIO pin is an output 
+ *                         100 = GPIO pin takes alt function 0
+ *                         101 = GPIO pin takes alt function 1
+ *                         110 = GPIO pin takes alt function 2
+ *                         111 = GPIO pin takes alt function 3
+ *                         011 = GPIO pin takes alt function 4
+ *                         010 = GPIO pin takes alt function 5
  */
 
 /******************************************************************************
@@ -91,18 +99,17 @@ str r1,[r0,#16]  /* write contents of r1 into address given by r0 + 16 */
  * "GPIO Pin Output Clear 1" register in the GPIO controller
  *
  ******************************************************************************/
-mov r1,#1       /* store 1 in register r1 */
+mov r1, #1       /* store 1 in register r1 */
 /* now r1 = 00000000 00000000 00000000 00000001 */
 
-lsl r1,#15      /* shift left contents of r1 by 15 bits */
+lsl r1, #15      /* shift left contents of r1 by 15 bits */
 /* now r1 = 00000000 00000000 10000000 00000000 */
 
-str r1,[r0,#41] /* write contents of r1 into address given by r0 + 41 */
-/* r0 + 41 = the "GPIO Pin Output Clear 1" register
+str r1, [r0, #44] /* write contents of r1 into address given by r0 + 44 */
+/* r0 + 44 = the "GPIO Pin Output Clear 1" register
 
 /******************************************************************************
  * Loop forever
  ******************************************************************************/
 loop$:
 b loop$
-
