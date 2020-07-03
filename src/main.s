@@ -49,21 +49,21 @@
 .globl _start
 _start:
 
-// Store 0x20200000 in r0; this is the base address of the GPIO controller
+/* Store 0x20200000 in r0; this is the base address of the GPIO controller */
 ldr r0, =0x20200000
 
-/******************************************************************************
+/*
  * Enable output to GPIO pin 47 (the ACT LED) by flipping a bit in a specific
  * register in the GPIO controller.
- ******************************************************************************/
-mov r1, #1  /* 00000000 00000000 00000000 00000001 */
+ */
+mov r1, #1  /* r1 = 00000000 00000000 00000000 00000001 */
 
-lsl r1, #22 /* 00000000 00100000 00000000 00000000 */
+lsl r1, #22 /* r1 = 00000000 00100000 00000000 00000000 */
 
-str r1, [r0, #16]  /* write contents of r1 into address given by r0 + 16 */
+str r1, [r0, #16]  /* write contents of r1 into address given by r0 + 16 (GPFSEL4) */
 
 /*
- * So writing r1 to (r0+16) results in
+ * So writing r1 to (r0 + 16) results in
  *
  * r0 + 16 = pins 40-49     00000000 00100000 00000000 00000000
  *
@@ -88,23 +88,24 @@ str r1, [r0, #16]  /* write contents of r1 into address given by r0 + 16 */
  *                         111 = GPIO pin takes alt function 3
  *                         011 = GPIO pin takes alt function 4
  *                         010 = GPIO pin takes alt function 5
+ *
+ * Thus we are setting pin #47 to command code 001 ("is an output")
  */
 
-/******************************************************************************
+/*
  * Turn off GPIO pin 47
  *
  * We do this by flipping the 15th bit (for the 32+15th pin) in the
  * "GPIO Pin Output Clear 1" register in the GPIO controller
- ******************************************************************************/
-// mov r1, #4294967295 /* store 1 in register r1 */
-//                 3       2       1
-ldr r1, =0b00000000000000001000000000000000
+ */
+mov r1, #1  /* 00000000 00000000 00000000 00000001 */
+
+lsl r1, #15 /* 00000000 00000000 10000000 00000000 */
 
 str r1, [r0, #44] /* write contents of r1 into address given by r0 + 44 */
-/* r0 + 44 = the "GPIO Pin Output Clear 1" register
 
-/******************************************************************************
+/*
  * Loop forever
- ******************************************************************************/
+ */
 loop$:
 b loop$
