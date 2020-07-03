@@ -95,12 +95,11 @@ str r1, [r0, #16]  /* write contents of r1 into address given by r0 + 16 */
  *
  * We do this by flipping the 15th bit (for the 32+15th pin) in the
  * "GPIO Pin Output Clear 1" register in the GPIO controller
- *
  ******************************************************************************/
-mov r1, #4294967295 /* store 1 in register r1 */
-/* now r1 = 00000000 00000000 00000000 00000001 */
+// mov r1, #4294967295 /* store 1 in register r1 */
+//                 3       2       1
+ldr r1, =0b00000000000000001000000000000000
 
-str r1, [r0, #40] /* write contents of r1 into address given by r0 + 40 */
 str r1, [r0, #44] /* write contents of r1 into address given by r0 + 44 */
 /* r0 + 44 = the "GPIO Pin Output Clear 1" register
 
