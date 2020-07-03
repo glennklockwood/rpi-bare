@@ -49,19 +49,16 @@
 .globl _start
 _start:
 
-/* Store 0x20200000 in register r0 - this is the base address of the GPIO
- * controller
- */
-ldr r0,=0x20200000
+// Store 0x20200000 in r0; this is the base address of the GPIO controller
+ldr r0, =0x20200000
 
 /******************************************************************************
  * Enable output to GPIO pin 47 (the ACT LED) by flipping a bit in a specific
  * register in the GPIO controller.
  ******************************************************************************/
-//       0b10010010010010010010010010010000       /* store 1 in register r1 */
-//         ..999888777666555444333222111000
-//         000111222333444555666777888999..
-ldr r1, =0b10010010010010010010010010010000       /* store 1 in register r1 */
+mov r1, #1  /* 00000000 00000000 00000000 00000001 */
+
+lsl r1, #22 /* 00000000 00100000 00000000 00000000 */
 
 str r1, [r0, #16]  /* write contents of r1 into address given by r0 + 16 */
 
@@ -76,8 +73,9 @@ str r1, [r0, #16]  /* write contents of r1 into address given by r0 + 16 */
  *                          MSB                             LSB
  *                          xx999888 77766655 54443332 22111000
  *
- * So writing 00000000 00100000 00000000 00000000 to (r0 + 16) affects the least
- * significant bit of the 7th GPIO in pins 40-49 (i.e., pin #47) to 001:
+ * So writing 00000000 00100000 00000000 00000000 to (r0 + 16) writes the `001`
+ * command code into the three-bit range reserved for the 7th GPIO in pins 40-49
+ * (i.e., pin #47):
  *
  *                          xx999888 77766655 54443332 22111000
  * r0 + 16 = pins 40-49     00000000 00100000 00000000 00000000
