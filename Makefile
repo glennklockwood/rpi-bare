@@ -43,16 +43,22 @@ MAP = kernel.map
 # The name of the linker script to use.
 LINKER = kernel.ld
 
+# Location of SD card to flash
+SDCARD = /dev/sda1
+
 # The names of all object files that must be generated. Deduced from the 
 # assembly code files in source.
-# OBJECTS := $(patsubst $(SOURCE)%.s,$(BUILD)%.o,$(wildcard $(SOURCE)*.s))
-OBJECTS := build/main.o
+OBJECTS := $(patsubst $(SOURCE)%.s,$(BUILD)%.o,$(wildcard $(SOURCE)*.s))
 
 # Rule to make everything.
 all: $(TARGET) $(LIST)
 
 # Rule to remake everything. Does not include clean.
 rebuild: all
+
+# Rule to flash the new kernel image on to the SD card
+install: $(TARGET)
+	sudo bash -c 'mount $(SDCARD) /mnt && cp -v $(TARGET) /mnt/ && md5sum $(TARGET) /mnt/$(TARGET) && umount /mnt'
 
 # Rule to make the listing file.
 $(LIST) : $(BUILD)output.elf
