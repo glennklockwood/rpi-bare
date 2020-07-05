@@ -27,20 +27,49 @@ b main
 main:
 mov sp, #0x8000 // gives us 0x8000 - 0x100 bytes of memory for our stack
 
-// set function of pinNum 47 to function 001
+ledPinNum .req r4
+mov ledPinNum, #47
+
+delayTime .req r5
+ldr delayTime, =500000
+
+// set function of pinNum 47 to function 001 (output)
 pinNum .req r0
 pinFunc .req r1
-mov pinNum, #47
+mov pinNum, ledPinNum
 mov pinFunc, #1
 bl SetGpioFunction
 .unreq pinNum
 .unreq pinFunc
 
-// 
-pinNum .req r0
-pinVal .req r1
-mov pinNum, #47
-mov pinVal, #1
-bl SetGpio
-.unreq pinNum
-.unreq pinVal
+loop$:
+    pinNum .req r0
+    pinVal .req r1
+    mov pinNum, ledPinNum
+    mov pinVal, #1
+    bl SetGpio
+    .unreq pinNum
+    .unreq pinVal
+
+    waitTime .req r0
+    mov waitTime, delayTime
+    bl WaitMicroSecs
+    .unreq waitTime
+
+    pinNum .req r0
+    pinVal .req r1
+    mov pinNum, ledPinNum
+    mov pinVal, #0
+    bl SetGpio
+    .unreq pinNum
+    .unreq pinVal
+
+    waitTime .req r0
+    mov waitTime, delayTime
+    bl WaitMicroSecs
+    .unreq waitTime
+
+b loop$
+
+.unreq ledPinNum
+.unreq delayTime
