@@ -49,6 +49,7 @@ fbInfoAddr .req r4
 bl SetGfxAddr
 mov fbInfoAddr, result // no error = r0 contains a valid questionnaire address
 .unreq result
+.unreq fbInfoAddr
 
 // raster loop
 x .req r5
@@ -56,8 +57,6 @@ y .req r6
 color .req r7
 mov color, #0x0
 render$:
-    mov r0, fbInfoAddr
-
     mov y, #768
     drawRow$:
         mov x, #1024
@@ -85,4 +84,3 @@ render$:
 .unreq color
 .unreq x
 .unreq y
-.unreq fbInfoAddr
