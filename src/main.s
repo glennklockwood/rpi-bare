@@ -30,11 +30,17 @@ b main
 main:
 mov sp, #0x8000 // gives us 0x8000 - 0x100 bytes of memory for our stack
 
+// load data
+ptrn .req r4
 ledPinNum .req r6
-mov ledPinNum, #47
-
 delayTime .req r7
-ldr delayTime, =250000
+ldr ptrn, =pattern  // pattern is a memory address
+ldr ledPinNum, =pin
+ldr delayTime, =delay
+
+ldr ptrn, [ptrn]    // now pattern is the contents of the memory address
+ldr ledPinNum, [ledPinNum]
+ldr delayTime, [delayTime]
 
 // set function of pinNum 47 to function 001 (output)
 pinNum .req r0
@@ -44,11 +50,6 @@ mov pinFunc, #1
 bl SetGpioFunction
 .unreq pinNum
 .unreq pinFunc
-
-// load data
-ptrn .req r4
-ldr ptrn, =pattern  // pattern is a memory address
-ldr ptrn, [ptrn]    // now pattern is the contents of the memory address
 
 seq .req r5
 mov seq, #0
@@ -87,4 +88,8 @@ b loop$
 .section .data
 .align 2    // align to 2**2 bytes (32-bit boundaries) because ldr only operates on 32-bit boundaries
 pattern:
-.int 0b11111111101010100010001000101010
+.int 0b10101000011101110111000010101000
+pin:
+.int 47
+delay:
+.int 250000
