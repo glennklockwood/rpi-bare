@@ -1,87 +1,49 @@
-# Copyright (c) 2012 Alex Chadwick
-# 
-# Permission is hereby granted, free of charge, to any person
-# obtaining a copy of this software and associated documentation
-# files (the "Software"), to deal in the Software without
-# restriction, including without limitation the rights to use,
-# copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following
-# conditions:
-# 
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-# OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-# OTHER DEALINGS IN THE SOFTWARE.
+# toolchain prefix to use
+ARM_TOOLCHAIN ?= arm-none-eabi
 
-# The toolchain to use. arm-none-eabi works, but there does exist 
-# arm-bcm2708-linux-gnueabi.
-ARMGNU ?= arm-none-eabi
+# build directory
+BUILD  = build
 
-# The intermediate directory for compiled object files.
-BUILD = build/
+# source directory
+SOURCE = src
 
-# The directory in which source files are stored.
-SOURCE = src/
-
-# The name of the output file to generate.
-TARGET = kernel.img
-
-# The name of the assembler listing file to generate.
-LIST = kernel.list
-
-# The name of the map file to generate.
-MAP = kernel.map
-
-# The name of the linker script to use.
-LINKER = kernel.ld
-
-# Location of SD card to flash
+# location of SD card to flash
 SDCARD = /dev/sda1
 
-# The names of all object files that must be generated. Deduced from the 
-# assembly code files in source.
-OBJECTS := $(patsubst $(SOURCE)%.s,$(BUILD)%.o,$(wildcard $(SOURCE)*.s))
+TARGET = kernel
+LINKER = kernel.ld
 
-# Rule to make everything.
-all: $(TARGET) $(LIST)
+ALL_OBJECTS := $(patsubst $(SOURCE)/%.s,$(BUILD)/%.o,$(wildcard $(SOURCE)/*.s))
 
-# Rule to remake everything. Does not include clean.
-rebuild: all
+blink: OBJECTS = build/main.o build/gpio.o build/blink.o build/timer.o
+blink: $(TARGET).img $(TARGET).list
 
-# Rule to flash the new kernel image on to the SD card
-install: $(TARGET)
-	sudo bash -c 'mount $(SDCARD) /mnt && cp -v $(TARGET) /mnt/ && md5sum $(TARGET) /mnt/$(TARGET) && umount /mnt'
+# flash the new kernel image on to the SD card
+install: $(TARGET).img
+	sudo bash -c 'mount $(SDCARD) /mnt && cp -v $(TARGET).img /mnt/ && md5sum $(TARGET).img /mnt/$(TARGET).img && umount /mnt'
 
-# Rule to make the listing file.
-$(LIST) : $(BUILD)output.elf
-	$(ARMGNU)-objdump -d $(BUILD)output.elf > $(LIST)
+# build the kernel image
+$(TARGET).img: $(BUILD)/$(TARGET).elf
+	$(ARM_TOOLCHAIN)-objcopy $< -O binary $@
 
-# Rule to make the image file.
-$(TARGET) : $(BUILD)output.elf
-	$(ARMGNU)-objcopy $(BUILD)output.elf -O binary $(TARGET) 
+# build the listing file
+$(TARGET).list: $(BUILD)/$(TARGET).elf
+	$(ARM_TOOLCHAIN)-objdump -d $< > $@
 
-# Rule to make the elf file.
-$(BUILD)output.elf : $(OBJECTS) $(LINKER)
-	$(ARMGNU)-ld --no-undefined $(OBJECTS) -Map $(MAP) -o $(BUILD)output.elf -T $(LINKER)
+# build the elf file
+$(BUILD)/$(TARGET).elf: $(ALL_OBJECTS) $(LINKER)
+	$(ARM_TOOLCHAIN)-ld --no-undefined $(OBJECTS) -Map $(TARGET).map -o $@ -T $(LINKER)
 
-# Rule to make the object files.
-$(BUILD)%.o: $(SOURCE)%.s $(BUILD)
-	$(ARMGNU)-as -I $(SOURCE) $< -o $@
+# compile assembly source
+$(BUILD)/%.o: $(SOURCE)/%.s $(BUILD)
+	$(ARM_TOOLCHAIN)-as -I $(SOURCE)/ $< -o $@
 
 $(BUILD):
-	mkdir $@
+	mkdir -p "$@"
 
 # Rule to clean files.
-clean : 
+clean:
 	-rm -rf $(BUILD)
-	-rm -f $(TARGET)
-	-rm -f $(LIST)
-	-rm -f $(MAP)
+	-rm -f $(TARGET).img
+	-rm -f $(TARGET).list
+	-rm -f $(TARGET).map
