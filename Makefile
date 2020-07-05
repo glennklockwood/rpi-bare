@@ -20,6 +20,9 @@ ALL_OBJECTS := $(patsubst $(SOURCE)/%.s,$(BUILD)/%.o,$(wildcard $(SOURCE)/*.s))
 blink: OBJECTS = build/blink.o  build/gpio.o build/timer.o
 blink: $(TARGET).img $(TARGET).list
 
+display: OBJECTS = build/framebuffer.o build/mailbox.o build/gpio.o
+display: $(TARGET).img $(TARGET).list
+
 # flash the new kernel image on to the SD card
 install: $(TARGET).img
 	sudo bash -c 'mount $(SDCARD) /mnt && cp -v $(TARGET).img /mnt/ && md5sum $(TARGET).img /mnt/$(TARGET).img && umount /mnt'
