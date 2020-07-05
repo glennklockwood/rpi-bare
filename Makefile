@@ -1,3 +1,5 @@
+.PHONY: blink install
+
 # toolchain prefix to use
 ARM_TOOLCHAIN ?= arm-none-eabi
 
@@ -15,7 +17,7 @@ LINKER = kernel.ld
 
 ALL_OBJECTS := $(patsubst $(SOURCE)/%.s,$(BUILD)/%.o,$(wildcard $(SOURCE)/*.s))
 
-blink: OBJECTS = build/main.o build/gpio.o build/blink.o build/timer.o
+blink: OBJECTS = build/blink.o  build/gpio.o build/timer.o
 blink: $(TARGET).img $(TARGET).list
 
 # flash the new kernel image on to the SD card
@@ -25,6 +27,7 @@ install: $(TARGET).img
 # build the kernel image
 $(TARGET).img: $(BUILD)/$(TARGET).elf
 	$(ARM_TOOLCHAIN)-objcopy $< -O binary $@
+	touch $@
 
 # build the listing file
 $(TARGET).list: $(BUILD)/$(TARGET).elf
@@ -35,11 +38,9 @@ $(BUILD)/$(TARGET).elf: $(ALL_OBJECTS) $(LINKER)
 	$(ARM_TOOLCHAIN)-ld --no-undefined $(OBJECTS) -Map $(TARGET).map -o $@ -T $(LINKER)
 
 # compile assembly source
-$(BUILD)/%.o: $(SOURCE)/%.s $(BUILD)
+$(BUILD)/%.o: $(SOURCE)/%.s
+	test -d "$(BUILD)" || mkdir -p "$(BUILD)"
 	$(ARM_TOOLCHAIN)-as -I $(SOURCE)/ $< -o $@
-
-$(BUILD):
-	mkdir -p "$@"
 
 # Rule to clean files.
 clean:
