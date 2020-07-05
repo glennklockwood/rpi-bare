@@ -23,15 +23,18 @@ _start:
 
 b main
 
+////////////////////////////////////////////////////////////////////////////////
+// Main code
+////////////////////////////////////////////////////////////////////////////////
 .section .text
 main:
 mov sp, #0x8000 // gives us 0x8000 - 0x100 bytes of memory for our stack
 
-ledPinNum .req r4
+ledPinNum .req r6
 mov ledPinNum, #47
 
-delayTime .req r5
-ldr delayTime, =500000
+delayTime .req r7
+ldr delayTime, =250000
 
 // set function of pinNum 47 to function 001 (output)
 pinNum .req r0
@@ -42,25 +45,27 @@ bl SetGpioFunction
 .unreq pinNum
 .unreq pinFunc
 
+// load data
+ptrn .req r4
+ldr ptrn, =pattern  // pattern is a memory address
+ldr ptrn, [ptrn]    // now pattern is the contents of the memory address
+
+seq .req r5
+mov seq, #0
+
 loop$:
     pinNum .req r0
     pinVal .req r1
     mov pinNum, ledPinNum
-    mov pinVal, #1
-    bl SetGpio
-    .unreq pinNum
-    .unreq pinVal
+    mov pinVal, #1      // r1 = 1
+    lsl pinVal, seq     // r1 = r1 << seq
+    and pinVal, ptrn    // r1 = r1 && ptrn
 
-    waitTime .req r0
-    mov waitTime, delayTime
-    bl WaitMicroSecs
-    .unreq waitTime
-
-    pinNum .req r0
-    pinVal .req r1
-    mov pinNum, ledPinNum
-    mov pinVal, #0
     bl SetGpio
+
+    add seq, #1
+    and seq, #31
+
     .unreq pinNum
     .unreq pinVal
 
@@ -73,3 +78,13 @@ b loop$
 
 .unreq ledPinNum
 .unreq delayTime
+.unreq seq
+.unreq ptrn
+
+////////////////////////////////////////////////////////////////////////////////
+// Non-executable data
+////////////////////////////////////////////////////////////////////////////////
+.section .data
+.align 2    // align to 2**2 bytes (32-bit boundaries) because ldr only operates on 32-bit boundaries
+pattern:
+.int 0b11111111101010100010001000101010
