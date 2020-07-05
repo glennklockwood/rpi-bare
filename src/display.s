@@ -46,38 +46,43 @@ bne noError$
 noError$:
 result .req r0
 fbInfoAddr .req r4
+bl SetGfxAddr
 mov fbInfoAddr, result // no error = r0 contains a valid questionnaire address
 .unreq result
 
 // raster loop
-color .req r0
-y .req r1
-x .req r2
-fbAddr .req r3
-mov color, #0
+x .req r5
+y .req r6
+color .req r7
+mov color, #0x0
 render$:
-    // fbInfoAddr + 32 = location of fb address filled out by the GPU
-    ldr fbAddr, [fbInfoAddr, #32] 
+    mov r0, fbInfoAddr
 
     mov y, #768
     drawRow$:
         mov x, #1024
         drawPixel$:
-            // "strh reg,[dest] stores low half-word in reg at the address given by dest"
-            // so copy the lower two bytes of color into the framebuffer
-            strh color, [fbAddr]
-            add fbAddr, #2 // +2 since each pixel uses 2 bytes in 16-bit color mode
+            mov r0, x
+            mov r1, y
+            bl DrawPixel
             sub x, #1 // move left by one position
             teq x, #0
             bne drawPixel$ // keep going until we hit x = 0
         sub y, #1 // move up by one position
-        add color, #1 // let this overflow
+
+        add color, #1
+        lsl color, #16 // mask off upper half of word
+        lsr color, #16 // mask off upper half of word
+
+        mov r0, color
+        bl SetFaceColor
+
         teq y, #0
         bne drawRow$ // keep going until we hit y = 0
 
     b render$
+
 .unreq color
 .unreq x
 .unreq y
-.unreq fbAddr
 .unreq fbInfoAddr

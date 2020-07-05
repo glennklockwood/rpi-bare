@@ -20,7 +20,7 @@ ALL_OBJECTS := $(patsubst $(SOURCE)/%.s,$(BUILD)/%.o,$(wildcard $(SOURCE)/*.s))
 blink: OBJECTS = build/blink.o  build/gpio.o build/timer.o
 blink: $(TARGET).img $(TARGET).list
 
-display: OBJECTS = build/display.o build/framebuffer.o build/mailbox.o build/gpio.o
+display: OBJECTS = build/display.o build/framebuffer.o build/mailbox.o build/gpio.o build/drawing.o
 display: $(TARGET).img $(TARGET).list
 
 # flash the new kernel image on to the SD card
