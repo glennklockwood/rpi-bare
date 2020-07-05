@@ -26,8 +26,10 @@ cmpls bitDepth, #32 // if height <= 4096
 movhi r0, #0 // if bitDepth > 32, r0 = 0
 movhi pc, lr
 
-fbInfoAddr .req r3
-push {lr}
+// NOTE: the course says to use r3 here, but that gets stomped on by
+// MailboxWrite.  So use r4 and retain state on the stack
+fbInfoAddr .req r4
+push {r4, lr}
 
 // write inputted frame buffer params into FrameBufferQuestionnaire
 ldr fbInfoAddr, =FrameBufferQuestionnaire
@@ -60,11 +62,11 @@ bl MailboxRead
 result .req r0
 teq result, #0 
 movne result, #0 // if MailboxRead returned nonzero, set result to nonzero
-popne {pc} // if MailboxRead returned nonzero, break
+popne {r4, pc} // if MailboxRead returned nonzero, break
 
 mov result, fbInfoAddr // return filled-out questionnaire address
 
-pop {pc}
+pop {r4, pc}
 .unreq result
 .unreq fbInfoAddr
 
@@ -73,7 +75,7 @@ pop {pc}
 // Frame buffer
 ////////////////////////////////////////////////////////////////////////////////
 .section .data
-.align 4
+.align 12 // note guide says to use 4, but 12 is what the GPU expects
 .globl FrameBufferQuestionnaire
 FrameBufferQuestionnaire:
 .int 1024   //  #0 in: physical width
