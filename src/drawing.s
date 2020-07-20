@@ -231,13 +231,14 @@ ldr charAddr, =font
 add charAddr, char, lsl #4
 .unreq char
 
-// Draw the character row by row
+// raster in y sixteen times
 rowLoop$:
     bits .req r7
     bit .req r8
-    ldrb bits, [charAddr]
+    ldrb bits, [charAddr] // load a single byte from the 4-byte charAddr
     mov bit, #8 // all characters are 8 pixels wide
 
+    // raster in x eight times
     bitLoop$:
         subs bit, #1 // subtract and compare to zero
         blt bitLoopEnd$ // break if we've visited every pixel in this row
@@ -260,10 +261,15 @@ rowLoop$:
     .unreq bit
     .unreq bits
 
+    // draw the next row of bits in y for this character
     add y, #1
     add charAddr, #1
 
-    tst charAddr, #15 // look for 0b1111 as an indicator to stop drawing(?)
+    // look for when our charAddr's four lowest-order bits are all 0; this
+    // signifies that we have overflowed past the 256 bits of any valid
+    // character (or we were passed the null character, in which case there's
+    // nothing to draw anyway)
+    tst charAddr, #0b1111
     bne rowLoop$
 .unreq x
 .unreq y
