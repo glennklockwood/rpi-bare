@@ -17,6 +17,9 @@ LINKER = kernel.ld
 
 ALL_OBJECTS := $(patsubst $(SOURCE)/%.s,$(BUILD)/%.o,$(wildcard $(SOURCE)/*.s))
 
+helloworld: OBJECTS = build/helloworld.o build/framebuffer.o build/mailbox.o build/gpio.o build/drawing.o
+helloworld: $(TARGET).img $(TARGET).list
+
 picasso: OBJECTS = build/picasso.o build/framebuffer.o build/mailbox.o build/gpio.o build/drawing.o build/random.o
 picasso: $(TARGET).img $(TARGET).list
 

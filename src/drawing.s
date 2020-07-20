@@ -7,6 +7,10 @@ facecolor:
 gfxAddr:
 .int 0
 
+.align 4
+font:
+.incbin "font1.bin"
+
 ////////////////////////////////////////////////////////////////////////////////
 // SetFaceColor: Sets global facecolor setting.  If facecolor is more than
 // 2 bytes, do nothing.  Recall that 16-bit encoding is RRRRRGGG GGGBBBBB
@@ -182,3 +186,165 @@ pixelLoop$:
 .unreq sx
 .unreq sy
 .unreq err
+
+////////////////////////////////////////////////////////////////////////////////
+// DrawChar: Draws a character 
+//
+// Inputs:
+//   r0: character to draw
+//   r1: x coordinate
+//   r2: y coordinate
+//
+// Outputs:
+//   None
+////////////////////////////////////////////////////////////////////////////////
+.globl DrawChar
+DrawChar:
+char .req r0
+
+cmp char, #127
+
+movhi r0, #0
+movhi r1, #0
+movhi pc, lr // on invalid input, zero out r0, r1 and return
+
+push {r4, r5, r6, r7, r8, lr}
+
+x .req r4
+y .req r5
+charAddr .req r6
+
+mov x, r1
+mov y, r2
+
+ldr charAddr, =font
+// charAddr = char * 16 + fontAddr
+// mla charAddr, char, #16, fontAddr
+add charAddr, char, lsl #4
+.unreq char
+
+// Draw the character row by row
+rowLoop$:
+    bits .req r7
+    bit .req r8
+    ldrb bits, [charAddr]
+    mov bit, #8 // all characters are 8 pixels wide
+
+    bitLoop$:
+        subs bit, #1 // subtract and compare to zero
+        blt bitLoopEnd$ // break if we've visited every pixel in this row
+
+        // reminder: bits is  0b00000000
+        // character is up to 0b01111111
+        // so we shift into the eighth field (0x100) and examine that one 
+        lsl bits, #1
+        tst bits, #0x100 // reminder: tst = logical and; 0x100 = 256
+        beq bitLoop$ // unless the bit at 0x100 is set, don't draw anything
+
+        add r0, x, bit
+        mov r1, y
+        bl DrawPixel // draw pixel at x + bit, y
+
+        teq bit, #0 // bit XOR 0
+        bne bitLoop$ // if bit is not zero, keep drawing (I don't understand this)
+
+    bitLoopEnd$:
+    .unreq bit
+    .unreq bits
+
+    add y, #1
+    add charAddr, #1
+
+    tst charAddr, #16 // look for 0b1111 as an indicator to stop drawing(?)
+    bne rowLoop$
+.unreq x
+.unreq y
+.unreq charAddr
+
+width .req r0
+height .req r1
+mov width, #8
+mov height, #16
+
+pop {r4, r5, r6, r7, r8, lr}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// DrawString: Draws a string of characters
+//
+// Inputs:
+//   r0: address to start of string in memory
+//   r1: length of string, in characters
+//   r2: x coordinate to begin drawing string
+//   r3: y coordinate to begin drawing string
+//
+// Outputs:
+//   None
+////////////////////////////////////////////////////////////////////////////////
+.globl DrawString
+DrawString:
+x .req r4
+y .req r5
+x0 .req r6
+string .req r7
+length .req r8
+char .req r9
+push {r4, r5, r6, r7, r8, r9, lr}
+
+mov string, r0
+mov x, r2
+mov x0, x
+mov y, r3
+mov length, r1
+
+stringLoop$:
+    subs length, #1
+    blt stringLoopEnd$ // if (length--) < 0, stop drawing
+
+    ldrb char, [string] // load byte from address pointed to by string into char
+    add string, #1 // move string address to that of the next character
+
+    // draw the character we just ldrb'ed on the framebuffer
+    mov r0, char
+    mov r1, x
+    mov r2, y
+    bl DrawChar
+    cwidth .req r0
+    cheight .req r1
+
+    // handle newline character
+    teq char, #'\n'
+    moveq x, x0  // if char == '\n', reset x to 0
+    addeq y, cheight // and increment y by one row
+    beq stringLoop$
+
+    /// handle tab characters
+    // if not a tab, just move cursor right by one and resume
+    teq char, #'\t'
+    addne x, cwidth
+    bne stringLoop$
+
+    // if a tab, move cursor right by 4
+    add cwidth, cwidth, lsl #2 // cwidth = cwidth + cwidth * 4
+    x1 .req r1
+    mov x1, x0
+
+    stringLoopTab$:
+        add x1, cwidth
+        cmp x, x1
+        bge stringLoopTab$
+    mov x, x1
+    .unreq x1
+
+    b stringLoop$
+
+stringLoopEnd$:
+.unreq cwidth
+.unreq cheight
+
+pop {r4, r5, r6, r7, r8, r9, pc}
+.unreq x
+.unreq y
+.unreq x0
+.unreq string
+.unreq length
