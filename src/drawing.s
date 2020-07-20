@@ -68,16 +68,24 @@ ldr fbdAddr, =gfxAddr
 ldr fbdAddr, [fbdAddr]
 
 // Check x, y coordinates less than width, height
+//   NOTE: I thought you could get away without the sub and just use 
+//     ldr height, [fbdAddr, #4]
+//     cmp py, height
+//     movhs py, height
+//   This does NOT work.  I don't understand why.
+height .req r3
+ldr height, [fbdAddr, #4]
+sub height, #1
+cmp py, height
+movhi pc, lr
+.unreq height
+
 width .req r3
 ldr width, [fbdAddr, #0]
+sub width, #1
 cmp px, width
-movhs pc, lr
-
-height .req r4
-ldr height, [fbdAddr, #4]
-cmp py, height
-movhs pc, lr
-.unreq height
+movhi pc, lr
+add width, #1 // add back the 1 we subtracted so we can use it below
 
 // Compute address of pixel to write
 // (x + y * width) * bitDensity
@@ -255,7 +263,7 @@ rowLoop$:
     add y, #1
     add charAddr, #1
 
-    tst charAddr, #16 // look for 0b1111 as an indicator to stop drawing(?)
+    tst charAddr, #15 // look for 0b1111 as an indicator to stop drawing(?)
     bne rowLoop$
 .unreq x
 .unreq y
@@ -266,8 +274,9 @@ height .req r1
 mov width, #8
 mov height, #16
 
-pop {r4, r5, r6, r7, r8, lr}
-
+pop {r4, r5, r6, r7, r8, pc}
+.unreq width
+.unreq height
 
 ////////////////////////////////////////////////////////////////////////////////
 // DrawString: Draws a string of characters
