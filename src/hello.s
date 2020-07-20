@@ -6,8 +6,10 @@ bl display
 
 .section .data
 .align 4
-printmsg:
-.incbin "helloworld.bin"
+printMsgLen:
+.int 11
+printMsg:
+.ascii "Hello world"
 
 .section .text
 ////////////////////////////////////////////////////////////////////////////////
@@ -54,8 +56,9 @@ fbInfoAddr .req r4
 mov fbInfoAddr, r0
 bl SetGfxAddr
 
-ldr r0, =printmsg
-mov r1, #22
+ldr r0, =printMsg
+ldr r1, =printMsgLen
+ldr r1, [r1]
 mov r2, #0
 mov r3, #0
 
