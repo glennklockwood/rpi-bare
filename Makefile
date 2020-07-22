@@ -17,6 +17,12 @@ LINKER = kernel.ld
 
 ALL_OBJECTS := $(patsubst $(SOURCE)/%.s,$(BUILD)/%.o,$(wildcard $(SOURCE)/*.s))
 
+printf: OBJECTS = build/printf.o build/fmtstring.o build/framebuffer.o build/mailbox.o build/gpio.o build/drawing.o
+printf: $(TARGET).img $(TARGET).list
+
+tags: OBJECTS = build/tags.o build/framebuffer.o build/mailbox.o build/gpio.o build/drawing.o
+tags: $(TARGET).img $(TARGET).list
+
 hello: OBJECTS = build/hello.o build/framebuffer.o build/mailbox.o build/gpio.o build/drawing.o
 hello: $(TARGET).img $(TARGET).list
 
