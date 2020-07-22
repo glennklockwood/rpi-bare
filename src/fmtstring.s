@@ -114,6 +114,17 @@ pop {pc}
 .unreq string
         
 ////////////////////////////////////////////////////////////////////////////////
+// FormatString
+//
+// Args:
+//   r0: address to format string
+//   r1: length of format string
+//   r2: address where formatted string should be stored
+//   r3: address to start of argument list
+//
+// Returns:
+//   r0: length of formatted string (also writes output to address given as r2)
+//
 .globl FormatString
 FormatString:
 format .req r4

@@ -47,38 +47,45 @@ mov fbInfoAddr, result // no error = r0 contains a valid questionnaire address
 .unreq result
 .unreq fbInfoAddr
 
-mov r4, #0
+mov r4, #0 // ascii character to print
 loop$:
-ldr r0, =format
-mov r1, #formatEnd-format
-ldr r2, =formatEnd
-lsr r3, r4, #4
-push {r3}
-push {r3}
-push {r3}
-push {r3}
-bl FormatString
-add sp, #16
+    ldr r0, =format // r0 = address of format string
+    mov r1, #formatEnd-format // r1 = length of 'format'
+    ldr r2, =formatEnd // r2 = address of end of format string; where output should be written in memory
+    lsr r3, r4, #4 // r3 = r4 / 4 (each character is 4 bytes wide in the ascii map)
+    push {r3} // updates sp to be sp - #4
+    push {r3} // updates sp to be sp - #4
+    push {r3} // updates sp to be sp - #4
+    push {r3} // updates sp to be sp - #4
 
-mov r1, r0
-ldr r0, =formatEnd
-mov r2, #0
-mov r3, r4
+    bl FormatString
+    add sp, #16 // pop last four values off top of stack
 
-cmp r3, #768-16
-subhi r3, #768
-addhi r2, #256
-cmp r3, #768-16
-subhi r3, #768
-addhi r2, #256
-cmp r3, #768-16
-subhi r3, #768
-addhi r2, #256
+    // build input arguments to DrawString
+    mov r1, r0  // r0 = length of formatted string
+    ldr r0, =formatEnd // r0 = formatted string
+    mov r2, #0 // r2 = x position to display string = 0
+    mov r3, r4 // r3 = y position to display string
 
-bl DrawString
+    cmp r3, #768-16 // if we're about to print beyond the last row
+    subhi r3, #768 // reset back to topmost y position (row 0)
+    addhi r2, #256 // and shift x to next column over (2nd col starts at 256th x pixel)
 
-add r4, #16
-b loop$
+    // if we're still beyond the last row, we'll have to print to third col, so
+    cmp r3, #768-16 // if we're about to print beyond the last row
+    subhi r3, #768 // reset back to topmost y position (row 0)
+    addhi r2, #256 // and shift x to next column over (3rd col starts at 512th x pixel)
+
+    // if we're STILL beyond hte last row, we're in the fourth column, so
+    cmp r3, #768-16 // if we're about to print beyond the last row
+    subhi r3, #768 // reset back to topmost y position (row 0)
+    addhi r2, #256 // and shift x to next column over (4rd col starts at 768th x pixel)
+
+    // draw the string
+    bl DrawString
+
+    add r4, #16 // move to the next character
+    b loop$
 
 .section .data
 format:
